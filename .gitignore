@@ -1,0 +1,6 @@
+*.bin
+*.img
+*.img.xz
+*.log
+spi-backup-*.bin
+.DS_Store

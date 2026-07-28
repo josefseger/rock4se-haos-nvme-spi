@@ -1,0 +1,4 @@
+overlay_prefix=rockchip
+overlays=rk3399-spi-jedec-nor
+param_spinor_spi_bus=1
+param_spinor_max_freq=1000000

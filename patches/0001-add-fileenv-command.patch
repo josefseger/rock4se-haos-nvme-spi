@@ -1,0 +1,89 @@
+diff --git a/cmd/Kconfig b/cmd/Kconfig
+index 1111111111..2222222222 100644
+--- a/cmd/Kconfig
++++ b/cmd/Kconfig
+@@ -2200,6 +2200,14 @@ config CMD_FAT
+ 	  Support for the FAT filesystem commands.
+ 
++config CMD_FILEENV
++	bool "fileenv"
++	depends on CMD_FAT
++	help
++	  Read a file through U-Boot's generic filesystem layer and store its
++	  complete contents in an environment variable. This is required by the
++	  Home Assistant OS boot script used by this guide.
++
+ diff --git a/cmd/Makefile b/cmd/Makefile
+index 3333333333..4444444444 100644
+--- a/cmd/Makefile
++++ b/cmd/Makefile
+@@ -80,6 +80,7 @@ obj-$(CONFIG_CMD_FAT) += fat.o
++obj-$(CONFIG_CMD_FILEENV) += fileenv.o
+ 
+ diff --git a/cmd/fileenv.c b/cmd/fileenv.c
+new file mode 100644
+index 0000000000..5555555555
+--- /dev/null
++++ b/cmd/fileenv.c
+@@ -0,0 +1,76 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Read a complete file into memory and store it as a U-Boot environment
++ * variable.
++ */
++
++#include <command.h>
++#include <env.h>
++#include <fs.h>
++#include <mapmem.h>
++#include <linux/types.h>
++
++static int do_fileenv(struct cmd_tbl *cmdtp, int flag, int argc,
++		      char *const argv[])
++{
++	const char *interface;
++	const char *dev_part;
++	const char *filename;
++	const char *envname;
++	char *buffer;
++	ulong address;
++	loff_t size;
++	loff_t actual;
++	int ret;
++
++	if (argc != 6)
++		return CMD_RET_USAGE;
++
++	interface = argv[1];
++	dev_part = argv[2];
++	address = hextoul(argv[3], NULL);
++	filename = argv[4];
++	envname = argv[5];
++
++	ret = fs_set_blk_dev(interface, dev_part, FS_TYPE_ANY);
++	if (ret)
++		return CMD_RET_FAILURE;
++
++	ret = fs_size(filename, &size);
++	if (ret)
++		return CMD_RET_FAILURE;
++
++	ret = fs_read(filename, address, 0, size, &actual);
++	if (ret || actual != size)
++		return CMD_RET_FAILURE;
++
++	buffer = map_sysmem(address, actual + 1);
++	buffer[actual] = '\0';
++	ret = env_set(envname, buffer);
++	unmap_sysmem(buffer);
++
++	return ret ? CMD_RET_FAILURE : CMD_RET_SUCCESS;
++}
++
++U_BOOT_CMD(
++	fileenv, 6, 0, do_fileenv,
++	"load a file into an environment variable",
++	"<interface> <dev[:part]> <addr> <filename> <envname>\n"
++	"    - read filename through the generic filesystem layer and store\n"
++	"      its contents in envname"
++);
