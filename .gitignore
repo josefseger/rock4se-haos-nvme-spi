@@ -4,3 +4,6 @@
 *.log
 spi-backup-*.bin
 .DS_Store
+
+# Keep the verified prebuilt HAOS SPI U-Boot image
+!firmware/u-boot-rockchip-spi.bin
