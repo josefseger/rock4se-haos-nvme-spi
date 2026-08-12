@@ -36,8 +36,42 @@ The stock Debian U-Boot 2025.01 was close, but HAOS also required:
   - write: approximately **360 MB/s**
   - read: approximately **1.2 GB/s**
 
+## Verified prebuilt SPI image
+
+The exact U-Boot image built and verified on the tested ROCK 4 SE is included in this repository:
+
+- [`firmware/u-boot-rockchip-spi.bin`](firmware/u-boot-rockchip-spi.bin)
+- [`firmware/SHA256SUMS`](firmware/SHA256SUMS)
+
+Image details:
+
+```text
+File:   u-boot-rockchip-spi.bin
+Size:   2,227,712 bytes
+SHA256: 85dc5a58abe48063b2c42b2d9541c9c44aca73fb87ba0685631b75f5c0d9d95b
+```
+
+This is the custom HAOS-capable build with early PCIe/NVMe initialization, `fileenv`, `setexpr`, SquashFS, LZO and generic filesystem support enabled.
+
+Before flashing, verify the downloaded image:
+
+```bash
+cd firmware
+sha256sum -c SHA256SUMS
+```
+
+Expected result:
+
+```text
+u-boot-rockchip-spi.bin: OK
+```
+
+The image was flashed to a 16 MiB SPI NOR at a configured SPI maximum frequency of **1 MHz**, then independently read back from `/dev/mtd0`; the source image and SPI readback were byte-identical and had the same SHA-256 shown above.
+
 ## Repository map
 
+- [`firmware/u-boot-rockchip-spi.bin`](firmware/u-boot-rockchip-spi.bin) — verified prebuilt HAOS-capable SPI U-Boot image
+- [`firmware/SHA256SUMS`](firmware/SHA256SUMS) — SHA-256 checksum for the prebuilt image
 - [`docs/hardware.md`](docs/hardware.md) — hardware assumptions and SPI setup
 - [`docs/build.md`](docs/build.md) — build the custom U-Boot
 - [`docs/flash.md`](docs/flash.md) — safely flash and verify SPI
@@ -63,9 +97,9 @@ The stock Debian U-Boot 2025.01 was close, but HAOS also required:
 1. Solder and expose the 16 MiB SPI NOR.
 2. Boot Armbian from SD.
 3. Enable the SPI NOR overlay at 1 MHz.
-4. Build Debian U-Boot 2025.01 for `rock-4se-rk3399`.
-5. Add `fileenv` and enable the HAOS-required commands and filesystems.
-6. Build with RK3399 ARM Trusted Firmware `bl31.elf`.
+4. Build Debian U-Boot 2025.01 for `rock-4se-rk3399`, or use the verified prebuilt image in `firmware/`.
+5. Add `fileenv` and enable the HAOS-required commands and filesystems when rebuilding.
+6. Build with RK3399 ARM Trusted Firmware `bl31.elf` when rebuilding.
 7. Flash U-Boot to `/dev/mtd0` and verify it twice.
 8. Flash the HAOS ROCK 4 image to NVMe.
 9. Remove SD and boot HAOS from NVMe.
